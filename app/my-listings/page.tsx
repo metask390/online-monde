@@ -1,8 +1,9 @@
 import type { Metadata } from 'next';
+import { createClient } from '@/lib/supabase/server';
 import { EmptyState } from '@/components/EmptyState';
+import { ListingCard } from '@/components/ListingCard';
 import { PageIntro } from '@/components/PageIntro';
 import { ProtectedNotice } from '@/components/ProtectedNotice';
-
+import { getApprovedListing } from '@/lib/data';
 export const metadata: Metadata = { title: 'میری پوسٹس', description: 'اپنی listings کے status اور actions دیکھیں۔' };
-
-export default function MyListingsPage() { return <div className="page-frame"><PageIntro kicker="your marketplace" title="میری پوسٹس" description="Pending، approved، rejected اور sold listings کا status یہاں manage ہوگا۔" /><div className="grid gap-7 lg:grid-cols-[.75fr_1.25fr]"><ProtectedNotice redirect="/my-listings" /><EmptyState title="آپ کی پوسٹس یہاں نظر آئیں گی" description="لاگ اِن کے بعد اپنی نئی listing بنائیں، edit کریں یا approved post کو sold mark کریں۔" actionHref="/listings/new" actionLabel="نئی پوسٹ بنائیں" /></div></div>; }
+export default async function MyListingsPage() { const c = createClient(); const { data: { user } } = c ? await c.auth.getUser() : { data: { user: null } }; const { data } = c && user ? await c.from('listings').select('id,status').eq('user_id', user.id).order('created_at', { ascending: false }) : { data: [] }; const approved = await Promise.all((data || []).filter((row: any) => row.status === 'approved').map((row: any) => getApprovedListing(row.id))); return <div className="page-frame"><PageIntro kicker="your marketplace" title="میری پوسٹس" description="Pending، approved، rejected اور sold listings کا status یہاں دیکھیں۔" /><div className="grid gap-7 lg:grid-cols-[.75fr_1.25fr]"><ProtectedNotice redirect="/my-listings" /><section>{data?.length ? <div className="space-y-4">{data.map((row: any) => <div key={row.id} className="soft-card flex items-center justify-between p-4"><span className="font-bold text-forest">{row.id.slice(0, 8)}</span><span className="rounded-full bg-cream px-3 py-1 text-xs">{row.status}</span></div>)}{approved.filter(Boolean).length > 0 && <div className="mt-6 grid gap-5 sm:grid-cols-2">{approved.filter(Boolean).map((listing: any) => <ListingCard key={listing.id} listing={listing} />)}</div>}</div> : <EmptyState title="آپ کی پوسٹس یہاں نظر آئیں گی" description="اپنی نئی listing بنا کر admin approval کے لیے بھیجیں۔" actionHref="/listings/new" actionLabel="نئی پوسٹ بنائیں" />}</section></div></div>; }

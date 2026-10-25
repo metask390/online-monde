@@ -1,7 +1,8 @@
 import Link from 'next/link';
-import { ArrowUpLeft, MapPin, MessageCircle, Phone, Tag } from 'lucide-react';
+import { ArrowUpLeft, MapPin, Phone, Tag } from 'lucide-react';
 import type { Listing } from '@/types/domain';
 import { buildWhatsAppUrl, categoryIcons, categoryLabels, formatPKR, isValidPakistaniNumber } from '@/lib/format';
+import { MessageSellerButton } from '@/components/PublicForms';
 
 export function ListingCard({ listing, compact = false }: { listing: Listing; compact?: boolean }) {
   const canWhatsapp = listing.whatsappPublished && isValidPakistaniNumber(listing.whatsappNumber);
@@ -14,7 +15,7 @@ export function ListingCard({ listing, compact = false }: { listing: Listing; co
     <div className="p-4">
       <div className="flex items-start justify-between gap-3"><div><h3 className="font-urdu text-lg font-bold leading-8 text-forest">{listing.title}</h3><p className="mt-1 flex items-center gap-1 text-xs text-muted"><MapPin size={13} /> {listing.city || 'شہر درج نہیں'}</p></div><span className="shrink-0 rounded-xl bg-forest/7 px-2 py-1 text-sm font-bold text-forest">{formatPKR(listing.price)} <small className="font-urdu font-normal">روپے</small></span></div>
       <div className="mt-4 flex flex-wrap gap-2 text-[11px] text-muted">{listing.breed && <span className="rounded-lg bg-cream px-2 py-1"><Tag size={11} className="ml-1 inline" />{listing.breed}</span>}{listing.age && <span className="rounded-lg bg-cream px-2 py-1">عمر: {listing.age}</span>}{listing.gender && <span className="rounded-lg bg-cream px-2 py-1">{listing.gender}</span>}</div>
-      <div className="mt-5 flex items-center gap-2"><Link href={`/listing/${listing.id}`} className="primary-button min-w-0 flex-1 !rounded-xl !px-3 !py-2.5 text-xs">تفصیل دیکھیں <ArrowUpLeft size={14} /></Link>{canWhatsapp && <a href={buildWhatsAppUrl(listing.whatsappNumber!, listing.title, listing.id)} target="_blank" rel="noreferrer" className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#25D366]/12 text-[#128C7E] transition hover:bg-[#25D366]/20" aria-label="WhatsApp پر رابطہ"><Phone size={17} /></a>}<Link href={`/messages?listing=${listing.id}`} className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-forest/10 text-forest transition hover:bg-gold/12" aria-label="فروخت کنندہ کو پیغام"><MessageCircle size={17} /></Link></div>
+      <div className="mt-5 flex items-center gap-2"><Link href={`/listing/${listing.id}`} className="primary-button min-w-0 flex-1 !rounded-xl !px-3 !py-2.5 text-xs">تفصیل دیکھیں <ArrowUpLeft size={14} /></Link>{canWhatsapp && <a href={buildWhatsAppUrl(listing.whatsappNumber!, listing.title, listing.id)} target="_blank" rel="noreferrer" className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#25D366]/12 text-[#128C7E] transition hover:bg-[#25D366]/20" aria-label="WhatsApp پر رابطہ"><Phone size={17} /></a>}<MessageSellerButton listingId={listing.id} /> </div>
     </div>
   </article>;
 }

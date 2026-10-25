@@ -1,10 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { MessageCircle, Plus } from 'lucide-react';
+import { createClient } from '@/lib/supabase/server';
 import { EmptyState } from '@/components/EmptyState';
 import { PageIntro } from '@/components/PageIntro';
 import { ProtectedNotice } from '@/components/ProtectedNotice';
-
 export const metadata: Metadata = { title: 'پیغامات', description: 'فروخت کنندگان اور ایڈمن کے ساتھ پیغامات۔' };
-
-export default function MessagesPage() { return <div className="page-frame"><PageIntro kicker="private conversations" title="پیغامات" description="اپنی conversations، unread messages اور listing inquiries manage کریں۔" /><div className="grid gap-7 lg:grid-cols-[.7fr_1.3fr]"><ProtectedNotice redirect="/messages" /><section className="soft-card p-5 sm:p-7"><div className="mb-6 flex items-center justify-between"><h2 className="font-urdu text-xl font-bold text-forest">Conversations</h2><Link href="/contact-admin" className="secondary-button !rounded-xl !px-3 !py-2 text-xs"><Plus size={14} /> نئی inquiry</Link></div><EmptyState title="ابھی کوئی conversation نہیں" description="کسی listing پر Message Seller دبانے کے بعد chat یہاں ظاہر ہوگی۔" /></section></div></div>; }
+export default async function MessagesPage() { const c = createClient(); const { data: { user } } = c ? await c.auth.getUser() : { data: { user: null } }; const { data } = c && user ? await c.from('conversation_participants').select('conversation_id, conversations(id, listing_id, updated_at)').eq('user_id', user.id).order('created_at', { ascending: false }) : { data: [] }; return <div className="page-frame"><PageIntro kicker="private conversations" title="پیغامات" description="اپنی conversations، unread messages اور listing inquiries manage کریں۔" /><div className="grid gap-7 lg:grid-cols-[.7fr_1.3fr]"><ProtectedNotice redirect="/messages" /><section className="soft-card p-5 sm:p-7"><div className="space-y-3">{data?.map((row: any) => <Link key={row.conversation_id} href={`/messages/${row.conversation_id}`} className="block rounded-2xl bg-cream p-4 font-bold text-forest">Conversation {row.conversation_id.slice(0, 8)}<span className="mt-1 block text-xs font-normal text-muted">آخری update: {row.conversations?.updated_at || 'ابھی'}</span></Link>)}{!data?.length && <EmptyState title="ابھی کوئی conversation نہیں" description="کسی listing پر Message Seller دبانے کے بعد chat یہاں ظاہر ہوگی۔" />}</div></section></div></div>; }
