@@ -1,29 +1,3 @@
 import type { Config } from 'tailwindcss';
-
-const config: Config = {
-  content: ['./app/**/*.{ts,tsx}', './components/**/*.{ts,tsx}', './lib/**/*.{ts,tsx}'],
-  theme: {
-    extend: {
-      colors: {
-        forest: '#1a4d2e',
-        'forest-dark': '#10351f',
-        cream: '#f5f0e1',
-        'cream-deep': '#ebe1c9',
-        gold: '#c9a961',
-        ink: '#24342a',
-        muted: '#6d7a70',
-      },
-      boxShadow: {
-        card: '0 16px 40px rgba(26, 77, 46, 0.08)',
-        glow: '0 0 0 6px rgba(201, 169, 97, 0.14)',
-      },
-      fontFamily: {
-        sans: ['var(--font-sans)', 'system-ui', 'sans-serif'],
-        urdu: ['var(--font-urdu)', 'Noto Nastaliq Urdu', 'serif'],
-      },
-    },
-  },
-  plugins: [],
-};
-
+const config: Config = { content: ['./app/**/*.{ts,tsx}', './components/**/*.{ts,tsx}', './lib/**/*.{ts,tsx}'], theme: { extend: { colors: { forest: '#047857', 'forest-dark': '#065f46', cream: '#f9fafb', 'cream-deep': '#f1f5f9', gold: '#fde68a', orange: { DEFAULT: '#ea580c', 700: '#c2410c' }, ink: '#17251f', muted: '#64748b' }, boxShadow: { card: '0 10px 30px rgba(15, 23, 42, 0.06)', premium: '0 18px 48px rgba(4, 120, 87, 0.14)', glow: '0 0 0 6px rgba(234, 88, 12, 0.14)' }, fontFamily: { sans: ['var(--font-sans)', 'system-ui', 'sans-serif'], urdu: ['var(--font-urdu)', 'Noto Nastaliq Urdu', 'serif'] } } }, plugins: [] };
 export default config;

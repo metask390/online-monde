@@ -1,50 +1,13 @@
 'use client';
-
 import Link from 'next/link';
-import { Bell, Menu, Search, X } from 'lucide-react';
-import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { Bell, ChevronDown, Globe2, LogOut, Menu, Search, ShieldCheck, UserRound, X } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { BrandMark } from '@/components/BrandMark';
-
-const secondaryLinks = [
-  ['پروفائل', '/profile'], ['میری پوسٹس', '/my-listings'], ['میرے آرڈرز', '/my-orders'],
-  ['پیغامات', '/messages'], ['پسندیدہ', '/favorites'], ['نوٹیفکیشنز', '/notifications'],
-];
-
-export function HeaderNav() {
-  const pathname = usePathname();
-  const [open, setOpen] = useState(false);
-  if (pathname.startsWith('/admin')) return null;
-  return (
-    <header className="sticky top-0 z-40 border-b border-forest/10 bg-cream/90 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
-        <BrandMark />
-        <div className="hidden items-center gap-2 sm:flex">
-          <Link href="/search" className="grid h-10 w-10 place-items-center rounded-xl text-forest transition hover:bg-gold/15" aria-label="تلاش">
-            <Search size={19} />
-          </Link>
-          <Link href="/notifications" className="relative grid h-10 w-10 place-items-center rounded-xl text-forest transition hover:bg-gold/15" aria-label="نوٹیفکیشنز">
-            <Bell size={19} />
-            <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-gold" aria-label="ایک unread notification" />
-          </Link>
-          <Link href="/auth/login" className="secondary-button !rounded-xl !px-4 !py-2 text-xs">لاگ اِن</Link>
-        </div>
-        <button className="grid h-10 w-10 place-items-center rounded-xl text-forest hover:bg-gold/15 sm:hidden" onClick={() => setOpen(true)} aria-label="مینو کھولیں">
-          <Menu size={22} />
-        </button>
-      </div>
-      {open && (
-        <div className="fixed inset-0 z-50 bg-forest/30 backdrop-blur-sm sm:hidden" onClick={() => setOpen(false)}>
-          <aside className="mr-auto h-full w-[min(84vw,360px)] bg-cream p-5 shadow-2xl" onClick={(event) => event.stopPropagation()}>
-            <div className="mb-8 flex items-center justify-between"><BrandMark compact /><button onClick={() => setOpen(false)} aria-label="مینو بند کریں" className="grid h-10 w-10 place-items-center rounded-xl hover:bg-gold/15"><X size={20} /></button></div>
-            <div className="space-y-2">
-              <Link href="/search" onClick={() => setOpen(false)} className="flex items-center gap-3 rounded-2xl border border-forest/10 bg-white/65 px-4 py-3 text-sm font-bold text-forest"><Search size={17} /> تلاش کریں</Link>
-              {secondaryLinks.map(([label, href]) => <Link key={href} href={href} onClick={() => setOpen(false)} className="block rounded-2xl px-4 py-3 font-urdu text-base text-ink transition hover:bg-gold/15">{label}</Link>)}
-              <Link href="/auth/login" onClick={() => setOpen(false)} className="primary-button mt-4 w-full">لاگ اِن / رجسٹر</Link>
-            </div>
-          </aside>
-        </div>
-      )}
-    </header>
-  );
-}
+import { createClient } from '@/lib/supabase/browser';
+import { LanguageToggle } from '@/components/LanguageProvider';
+const ADMIN_EMAIL = 'muhammaddanyal4545@gmail.com';
+const secondaryLinks = [['Profile', '/profile'], ['My Listings', '/my-listings'], ['My Orders', '/my-orders'], ['Messages', '/messages'], ['Favorites', '/favorites'], ['Notifications', '/notifications']];
+export function HeaderNav() { const pathname = usePathname(); const router = useRouter(); const [open, setOpen] = useState(false); const [menu, setMenu] = useState(false); const [email, setEmail] = useState<string | null>(null); useEffect(() => { const c = createClient(); if (!c) return; c.auth.getUser().then(({ data }) => setEmail(data.user?.email || null)); const { data } = c.auth.onAuthStateChange((_event, session) => setEmail(session?.user?.email || null)); return () => data.subscription.unsubscribe(); }, []); if (pathname.startsWith('/admin')) return null; const isAdmin = email?.toLowerCase() === ADMIN_EMAIL;
+  async function logout() { const c = createClient(); await c?.auth.signOut(); setEmail(null); setMenu(false); router.refresh(); }
+  return <header className="sticky top-0 z-40 border-b border-emerald-900/10 bg-white/90 backdrop-blur-xl"><div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8"><BrandMark /><div className="hidden items-center gap-2 sm:flex"><LanguageToggle /><Link href="/search" className="grid h-10 w-10 place-items-center rounded-xl text-forest transition hover:bg-orange/10" aria-label="Search"><Search size={19} /></Link><Link href="/notifications" className="relative grid h-10 w-10 place-items-center rounded-xl text-forest transition hover:bg-orange/10" aria-label="Notifications"><Bell size={19} /><span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-orange" /></Link>{email ? <div className="relative"><button onClick={() => setMenu(!menu)} className="secondary-button !rounded-xl !px-3 !py-2 text-xs"><UserRound size={16} /> {email.split('@')[0]} <ChevronDown size={14} /></button>{menu && <div className="absolute right-0 mt-2 w-56 rounded-2xl border border-emerald-900/10 bg-white p-2 shadow-premium"><Link href="/profile" onClick={() => setMenu(false)} className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm hover:bg-orange/5"><UserRound size={16} /> Profile</Link>{isAdmin && <Link href="/admin" onClick={() => setMenu(false)} className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-bold text-forest hover:bg-orange/5"><ShieldCheck size={16} /> Admin Dashboard</Link>}<button onClick={logout} className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"><LogOut size={16} /> Sign out</button></div>}</div> : <Link href="/auth/login" className="primary-button !rounded-xl !px-4 !py-2 text-xs">Sign in</Link>}</div><button className="grid h-10 w-10 place-items-center rounded-xl text-forest hover:bg-orange/10 sm:hidden" onClick={() => setOpen(true)} aria-label="Open menu"><Menu size={22} /></button></div>{open && <div className="fixed inset-0 z-50 bg-emerald-950/30 backdrop-blur-sm sm:hidden" onClick={() => setOpen(false)}><aside className="mr-auto h-full w-[min(84vw,360px)] bg-white p-5 shadow-2xl" onClick={(event) => event.stopPropagation()}><div className="mb-8 flex items-center justify-between"><BrandMark compact /><button onClick={() => setOpen(false)} aria-label="Close menu" className="grid h-10 w-10 place-items-center rounded-xl hover:bg-orange/10"><X size={20} /></button></div><div className="space-y-2"><div className="mb-3 flex items-center justify-between"><span className="text-sm font-bold text-forest">Language</span><LanguageToggle /></div><Link href="/search" onClick={() => setOpen(false)} className="flex items-center gap-3 rounded-2xl border border-emerald-900/10 px-4 py-3 text-sm font-bold text-forest"><Search size={17} /> Search</Link>{secondaryLinks.map(([label, href]) => <Link key={href} href={href} onClick={() => setOpen(false)} className="block rounded-2xl px-4 py-3 text-base text-ink transition hover:bg-orange/5">{label}</Link>)}{isAdmin && <Link href="/admin" onClick={() => setOpen(false)} className="flex items-center gap-2 rounded-2xl px-4 py-3 font-bold text-forest"><ShieldCheck size={17} /> Admin Dashboard</Link>}<Link href={email ? '/profile' : '/auth/login'} onClick={() => setOpen(false)} className="primary-button mt-4 w-full">{email ? 'Profile' : 'Sign in / Register'}</Link></div></aside></div>}</header>; }
