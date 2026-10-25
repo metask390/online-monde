@@ -20,6 +20,18 @@
     { "path": "/auth/reset-password", "title": "Reset Password" },
     { "path": "/auth/callback", "title": "Auth Callback" },
     { "path": "/auth/verify-email", "title": "Verify Email" },
-    { "path": "/search", "title": "Search" }
+    { "path": "/search", "title": "Search" },
+    { "path": "/admin/login", "title": "Admin Login" },
+    { "path": "/admin", "title": "Admin Dashboard" },
+    { "path": "/admin/listings", "title": "Admin Moderation" },
+    { "path": "/admin/inventory", "title": "Admin Inventory" },
+    { "path": "/admin/milk-products", "title": "Admin Milk Products" },
+    { "path": "/admin/orders", "title": "Admin Orders" },
+    { "path": "/admin/requests", "title": "Admin Requests" },
+    { "path": "/admin/users", "title": "Admin Users" },
+    { "path": "/admin/reports", "title": "Admin Reports" },
+    { "path": "/admin/notifications", "title": "Admin Notifications" },
+    { "path": "/admin/settings", "title": "Admin Settings" },
+    { "path": "/admin/activity", "title": "Admin Activity" }
   ]
 }

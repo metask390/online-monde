@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { Bell, Menu, Search, X } from 'lucide-react';
+import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { BrandMark } from '@/components/BrandMark';
 
@@ -11,7 +12,9 @@ const secondaryLinks = [
 ];
 
 export function HeaderNav() {
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  if (pathname.startsWith('/admin')) return null;
   return (
     <header className="sticky top-0 z-40 border-b border-forest/10 bg-cream/90 backdrop-blur-xl">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">

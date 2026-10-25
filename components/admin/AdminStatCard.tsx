@@ -1,0 +1,3 @@
+import type { ReactNode } from 'react';
+
+export function AdminStatCard({ label, value, tone = 'green', icon }: { label: string; value: number | string; tone?: 'green' | 'gold' | 'red' | 'cream'; icon: ReactNode }) { const backgrounds = { green: 'bg-forest text-white', gold: 'bg-gold text-forest-dark', red: 'bg-[#f4ded8] text-[#8c3f2f]', cream: 'bg-white text-forest' }; return <div className={`rounded-2xl border border-forest/10 p-5 shadow-card ${backgrounds[tone]}`}><div className="flex items-start justify-between gap-3"><span className="text-sm font-semibold opacity-75">{label}</span><span className="opacity-80">{icon}</span></div><strong className="mt-6 block text-3xl">{value}</strong></div>; }

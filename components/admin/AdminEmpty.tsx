@@ -1,0 +1,3 @@
+import { Database, Inbox } from 'lucide-react';
+
+export function AdminEmpty({ title = 'کوئی ریکارڈ نہیں', description = 'Database connection کے بعد records یہاں دکھائی دیں گے۔' }: { title?: string; description?: string }) { return <div className="rounded-2xl border border-dashed border-forest/15 bg-white/60 px-6 py-12 text-center"><Inbox className="mx-auto text-gold" size={28} /><h2 className="mt-4 font-urdu text-xl font-bold text-forest">{title}</h2><p className="mx-auto mt-2 max-w-md font-urdu text-sm leading-7 text-muted">{description}</p><p className="mt-4 inline-flex items-center gap-2 rounded-full bg-cream px-3 py-1 text-[11px] text-muted"><Database size={13} /> Supabase data boundary ready</p></div>; }
