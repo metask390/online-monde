@@ -1,0 +1,25 @@
+{
+  "routes": [
+    { "path": "/", "title": "Dashboard" },
+    { "path": "/available-items", "title": "Available Items" },
+    { "path": "/livestock-market", "title": "Livestock Market" },
+    { "path": "/listing/:id", "title": "Listing Detail" },
+    { "path": "/contact-admin", "title": "Contact Admin" },
+    { "path": "/milk", "title": "Milk Products" },
+    { "path": "/listings/new", "title": "Create Listing" },
+    { "path": "/my-listings", "title": "My Listings" },
+    { "path": "/my-orders", "title": "My Orders" },
+    { "path": "/favorites", "title": "Favorites" },
+    { "path": "/notifications", "title": "Notifications" },
+    { "path": "/messages", "title": "Messages" },
+    { "path": "/messages/:conversationId", "title": "Conversation" },
+    { "path": "/profile", "title": "Profile" },
+    { "path": "/auth/login", "title": "Login" },
+    { "path": "/auth/register", "title": "Register" },
+    { "path": "/auth/forgot-password", "title": "Forgot Password" },
+    { "path": "/auth/reset-password", "title": "Reset Password" },
+    { "path": "/auth/callback", "title": "Auth Callback" },
+    { "path": "/auth/verify-email", "title": "Verify Email" },
+    { "path": "/search", "title": "Search" }
+  ]
+}

@@ -1,0 +1,3 @@
+const labels: Record<string, string> = { pending: 'زیرِ غور', approved: 'منظور شدہ', rejected: 'مسترد', sold: 'فروخت شدہ', confirmed: 'تصدیق شدہ', processing: 'تیاری میں', completed: 'مکمل', cancelled: 'منسوخ' };
+
+export function StatusBadge({ status }: { status: string }) { const tone = status === 'approved' || status === 'completed' ? 'bg-emerald-100 text-emerald-800' : status === 'rejected' || status === 'cancelled' ? 'bg-red-100 text-red-800' : status === 'sold' ? 'bg-slate-100 text-slate-700' : 'bg-gold/20 text-forest'; return <span className={`inline-flex rounded-full px-3 py-1 font-urdu text-xs font-bold ${tone}`}>{labels[status] || status}</span>; }

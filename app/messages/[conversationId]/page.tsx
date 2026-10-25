@@ -1,0 +1,9 @@
+import type { Metadata } from 'next';
+import Link from 'next/link';
+import { ArrowRight, Mic, Paperclip, Send } from 'lucide-react';
+import { PageIntro } from '@/components/PageIntro';
+import { ProtectedNotice } from '@/components/ProtectedNotice';
+
+export const metadata: Metadata = { title: 'Conversation', description: 'Private message conversation' };
+
+export default function ConversationPage({ params }: { params: { conversationId: string } }) { void params; return <div className="page-frame"><PageIntro kicker="private chat" title="Conversation" description="Listing seller کے ساتھ محفوظ پیغام رسانی۔" backHref="/messages" /><div className="grid gap-7 lg:grid-cols-[.7fr_1.3fr]"><ProtectedNotice redirect="/messages" /><section className="soft-card flex min-h-[430px] flex-col p-4 sm:p-6"><div className="flex items-center gap-3 border-b border-forest/10 pb-4"><span className="grid h-11 w-11 place-items-center rounded-2xl bg-gold/15 text-forest">♞</span><div><h2 className="font-urdu font-bold text-forest">Seller conversation</h2><p className="text-xs text-muted">Realtime messages یہاں آئیں گے</p></div></div><div className="flex flex-1 flex-col items-center justify-center text-center"><p className="font-urdu text-sm leading-8 text-muted">اس conversation میں ابھی کوئی پیغام نہیں۔</p></div><div className="flex items-center gap-2 border-t border-forest/10 pt-4"><button className="grid h-10 w-10 place-items-center rounded-xl text-forest hover:bg-gold/10" aria-label="فائل attach کریں"><Paperclip size={18} /></button><input className="field !rounded-xl" placeholder="پیغام لکھیں..." /><button className="grid h-10 w-10 place-items-center rounded-xl bg-forest text-white" aria-label="Voice message"><Mic size={17} /></button><button className="grid h-10 w-10 place-items-center rounded-xl bg-gold text-forest-dark" aria-label="پیغام بھیجیں"><Send size={17} /></button></div></section></div></div>; }
