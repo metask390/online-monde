@@ -1,6 +1,3 @@
 'use client';
-
-import { useTransition } from 'react';
-import { updateContactRequest } from '@/app/admin/actions';
-
-export function RequestStatusActions({ requestId }: { requestId: string }) { const [pending, startTransition] = useTransition(); const run = (status: 'in_review' | 'more_info' | 'approved' | 'rejected') => startTransition(async () => { const result = await updateContactRequest({ requestId, status }); if (!result.success) window.alert(result.message); }); return <div className="flex flex-wrap gap-2">{(['in_review', 'more_info', 'approved', 'rejected'] as const).map((status) => <button key={status} disabled={pending} onClick={() => run(status)} className="rounded-lg border border-forest/10 bg-white px-2.5 py-1.5 text-[11px] font-bold text-forest">{status}</button>)}</div>; }
+import { useRouter } from 'next/navigation'; import { useTransition } from 'react'; import { updateContactRequest } from '@/app/admin/actions';
+export function RequestStatusActions({requestId}:{requestId:string}){const [pending,startTransition]=useTransition();const router=useRouter();const run=(status:'in_review'|'more_info'|'approved'|'rejected')=>startTransition(async()=>{const result=await updateContactRequest({requestId,status});if(!result.success)window.alert(result.message);else router.refresh();});return <div className="flex flex-wrap gap-2">{(['in_review','more_info','approved','rejected'] as const).map(status=><button key={status} disabled={pending} onClick={()=>run(status)} className="rounded-lg border border-forest/10 bg-white px-2.5 py-1.5 text-[11px] font-bold text-forest">{status}</button>)}</div>;}
