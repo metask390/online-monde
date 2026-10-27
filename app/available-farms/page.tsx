@@ -1,0 +1,1 @@
+import type { Metadata } from 'next'; import { FarmsDirectory } from '@/components/FarmsDirectory'; import { getDairyFarms } from '@/lib/data'; export const metadata:Metadata={title:'Available Farms',description:'دستیاب ڈیری فارمز'}; export default async function AvailableFarmsPage(){return <FarmsDirectory farms={await getDairyFarms()}/>}
