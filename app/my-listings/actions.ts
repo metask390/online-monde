@@ -51,7 +51,7 @@ export async function updateMyListing(input: FormData | Record<string, unknown>)
     const client = admin || createClient();
     if (!client) return { success: false, message: 'Supabase configuration is unavailable.' };
     const { listingId, ...fields } = parsed.data;
-    const { data, error } = await client.from('listings').update({ ...fields, status: 'pending' }).eq('id', listingId).eq('user_id', user.id).select('id').maybeSingle();
+    const { data, error } = await client.from('listings').update({ ...fields, status: 'pending', rejection_reason: null }).eq('id', listingId).eq('user_id', user.id).select('id').maybeSingle();
     if (error || !data) return { success: false, message: error?.message || 'Listing update نہیں ہو سکی۔' };
     revalidatePath('/my-listings'); revalidatePath('/livestock-market'); revalidatePath('/'); revalidatePath(`/listing/${listingId}`);
     return { success: true, message: 'Post updated and sent for admin approval again.' };
