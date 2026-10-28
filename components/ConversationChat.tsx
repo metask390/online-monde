@@ -1,22 +1,158 @@
 'use client';
+
 import { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, CheckCheck, ImagePlus, Mic, Paperclip, Send, Square } from 'lucide-react';
+import { ArrowLeft, CheckCheck, Mic, Paperclip, Send, Square } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/browser';
 
-type OtherUser = { username?: string|null; full_name?: string|null; avatar_url?: string|null };
-function publicUrl(path: string) { const client=createClient(); return client?.storage.from('voice-messages').getPublicUrl(path).data.publicUrl||''; }
-export function ConversationChat({ conversationId, otherUser }: { conversationId:string; otherUser?:OtherUser|null }) {
-  const router=useRouter(); const [messages,setMessages]=useState<any[]>([]); const [text,setText]=useState(''); const [userId,setUserId]=useState(''); const [busy,setBusy]=useState(false); const [recording,setRecording]=useState(false); const [error,setError]=useState('');
-  const recorder=useRef<MediaRecorder|null>(null); const chunks=useRef<Blob[]>([]); const fileInput=useRef<HTMLInputElement>(null); const end=useRef<HTMLDivElement>(null);
-  const cutoff=()=>new Date(Date.now()-48*60*60*1000).toISOString();
-  useEffect(()=>{let channel:any;let mounted=true;(async()=>{const client=createClient();if(!client)return;const {data:{user}}=await client.auth.getUser();if(!user||!mounted)return;setUserId(user.id);const {data,error:loadError}=await client.from('messages').select('*').eq('conversation_id',conversationId).gte('created_at',cutoff()).order('created_at',{ascending:true});if(loadError)setError(loadError.message);else setMessages(data||[]);channel=client.channel(`messages-${conversationId}`).on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:`conversation_id=eq.${conversationId}`},payload=>{if(new Date(payload.new.created_at).getTime()>=Date.now()-48*60*60*1000)setMessages(items=>items.some(item=>item.id===payload.new.id)?items:[...items,payload.new]);}).subscribe();})();return()=>{mounted=false;if(channel)createClient()?.removeChannel(channel);};},[conversationId]);
-  useEffect(()=>{end.current?.scrollIntoView({behavior:'smooth'});},[messages]);
-  async function saveMessage(payload:any){const client=createClient();if(!client||!userId)return;const {data,error:insertError}=await client.from('messages').insert({conversation_id:conversationId,sender_id:userId,...payload}).select('*').single();if(insertError)setError(insertError.message);else if(data)setMessages(items=>items.some(item=>item.id===data.id)?items:[...items,data]);}
-  async function uploadFile(file:File){const client=createClient();if(!client||!userId)return;setBusy(true);setError('');const type=file.type.startsWith('video/')?'video':'image';const path=`media/${userId}/${conversationId}/${crypto.randomUUID()}-${file.name.replace(/[^a-zA-Z0-9._-]/g,'-')}`;const upload=await client.storage.from('voice-messages').upload(path,file,{contentType:file.type,upsert:false});if(upload.error){setError(upload.error.message);setBusy(false);return;}await saveMessage({content:publicUrl(path),message_type:type});setBusy(false);}
-  async function uploadVoice(blob:Blob){const client=createClient();if(!client||!userId)return;setBusy(true);setError('');const path=`voice/${userId}/${conversationId}/${crypto.randomUUID()}.webm`;const upload=await client.storage.from('voice-messages').upload(path,blob,{contentType:'audio/webm',upsert:false});if(upload.error){setError(upload.error.message);setBusy(false);return;}await saveMessage({content:null,message_type:'voice',voice_url:path});setBusy(false);}
-  async function toggleRecording(){if(recording){recorder.current?.stop();setRecording(false);return;}try{if(!navigator.mediaDevices?.getUserMedia||typeof MediaRecorder==='undefined')throw new Error('Voice recording is not supported in this browser.');const stream=await navigator.mediaDevices.getUserMedia({audio:true});const next=new MediaRecorder(stream);chunks.current=[];next.ondataavailable=event=>{if(event.data.size)chunks.current.push(event.data);};next.onerror=()=>setError('Voice recording failed.');next.onstop=async()=>{stream.getTracks().forEach(track=>track.stop());await uploadVoice(new Blob(chunks.current,{type:'audio/webm'}));};recorder.current=next;next.start();setRecording(true);setError('');}catch(reason){setError(reason instanceof Error?reason.message:'Microphone permission was denied.');setRecording(false);}}
-  async function send(event:React.FormEvent){event.preventDefault();const content=text.trim();if(!content||busy)return;setBusy(true);setError('');await saveMessage({content,message_type:'text'});setText('');setBusy(false);router.refresh();}
-  const name=otherUser?.full_name||otherUser?.username||'Chat contact';
-  return <section className="overflow-hidden rounded-3xl border border-forest/10 bg-[#efe7db] shadow-card"><header className="flex items-center gap-3 bg-[#075e54] px-4 py-3 text-white"><button type="button" onClick={()=>router.push('/messages')} className="grid h-9 w-9 place-items-center rounded-full hover:bg-white/10" aria-label="Back to messages"><ArrowLeft size={19}/></button><div className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-full bg-gold font-black text-forest">{otherUser?.avatar_url?<img src={otherUser.avatar_url} alt={name} className="h-full w-full object-cover"/>:name.slice(0,1).toUpperCase()}</div><div className="min-w-0"><h2 className="truncate font-bold">{name}</h2><p className="truncate text-xs text-white/70">{otherUser?.username?`@${otherUser.username}`:'Private conversation'}</p></div></header><div className="flex min-h-[500px] flex-col justify-end p-4 sm:p-6"><div className="max-h-[460px] space-y-2 overflow-y-auto pr-1">{messages.map(item=>{const mine=item.sender_id===userId;return <div key={item.id} className={`flex ${mine?'justify-end':'justify-start'}`}><div className={`max-w-[84%] rounded-2xl px-3.5 py-2.5 text-sm shadow-sm ${mine?'rounded-br-sm bg-[#128c7e] text-white':'rounded-bl-sm bg-white text-slate-800'}`}>{item.message_type==='voice'&&item.voice_url?<audio controls preload="metadata" className="max-w-full" src={publicUrl(item.voice_url)}/>:item.message_type==='image'&&item.content?<img src={item.content} alt="Shared image" className="max-h-64 rounded-xl object-cover"/>:item.message_type==='video'&&item.content?<video controls src={item.content} className="max-h-64 rounded-xl"/>:<p className="whitespace-pre-wrap break-words">{item.content||'Voice message'}</p>}<div className={`mt-1 flex items-center justify-end gap-1 text-[10px] ${mine?'text-white/70':'text-slate-500'}`}>{item.created_at?new Date(item.created_at).toLocaleTimeString('en-PK',{hour:'numeric',minute:'2-digit'}):''}{mine&&<CheckCheck size={12}/>}</div></div></div>})}<div ref={end}/></div>{error&&<p className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-xs text-red-700">{error}</p>}<form onSubmit={send} className="mt-4 flex items-center gap-2 border-t border-forest/10 pt-4"><input ref={fileInput} type="file" accept="image/*,video/*" className="hidden" onChange={event=>{const file=event.target.files?.[0];if(file)void uploadFile(file);event.currentTarget.value='';}}/><button type="button" onClick={()=>fileInput.current?.click()} disabled={busy||recording} className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white text-forest shadow-sm" aria-label="Attach image or video"><Paperclip size={17}/><ImagePlus className="hidden"/></button><button type="button" onClick={toggleRecording} disabled={busy} className={`grid h-10 w-10 shrink-0 place-items-center rounded-full ${recording?'bg-red-100 text-red-700':'bg-white text-forest shadow-sm'}`} aria-label={recording?'Stop recording':'Record voice message'}>{recording?<Square size={17}/>:<Mic size={18}/>}</button><input className="field !rounded-full bg-white" value={text} onChange={event=>setText(event.target.value)} placeholder={recording?'Recording...':'Write a message...'} disabled={recording||busy}/><button disabled={busy||!text.trim()} className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#25d366] text-white disabled:opacity-50" aria-label="Send message"><Send size={17}/></button></form></div></section>;
+type OtherUser = { username?: string | null; full_name?: string | null; avatar_url?: string | null };
+type ChatMessage = { id: string; sender_id: string; content?: string | null; message_type?: string | null; voice_url?: string | null; created_at?: string | null };
+
+function publicUrl(path: string) {
+  const client = createClient();
+  return client?.storage.from('voice-messages').getPublicUrl(path).data.publicUrl || '';
+}
+
+export function ConversationChat({ conversationId, otherUser }: { conversationId: string; otherUser?: OtherUser | null }) {
+  const router = useRouter();
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [text, setText] = useState('');
+  const [userId, setUserId] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [recording, setRecording] = useState(false);
+  const [error, setError] = useState('');
+  const recorder = useRef<MediaRecorder | null>(null);
+  const chunks = useRef<Blob[]>([]);
+  const fileInput = useRef<HTMLInputElement>(null);
+  const end = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    let channel: any;
+    let mounted = true;
+    const fortyEightHoursAgo = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+
+    (async () => {
+      const client = createClient();
+      if (!client) return;
+      const { data: { user } } = await client.auth.getUser();
+      if (!user || !mounted) return;
+      setUserId(user.id);
+
+      const { data, error: loadError } = await client
+        .from('messages')
+        .select('*')
+        .eq('conversation_id', conversationId)
+        .gte('created_at', fortyEightHoursAgo)
+        .order('created_at', { ascending: true });
+
+      if (loadError) setError('Messages could not be loaded. Please try again.');
+      else if (mounted) setMessages((data || []) as ChatMessage[]);
+
+      channel = client
+        .channel(`messages-${conversationId}`)
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${conversationId}` }, (payload) => {
+          if (new Date(payload.new.created_at).getTime() >= Date.now() - 48 * 60 * 60 * 1000) {
+            setMessages((items) => items.some((item) => item.id === payload.new.id) ? items : [...items, payload.new as ChatMessage]);
+          }
+        })
+        .subscribe();
+    })();
+
+    return () => {
+      mounted = false;
+      if (channel) createClient()?.removeChannel(channel);
+    };
+  }, [conversationId]);
+
+  useEffect(() => { end.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
+
+  async function sendMessage() {
+    const content = text.trim();
+    if (!content || busy) return false;
+    const client = createClient();
+    if (!client) return false;
+    setBusy(true);
+    setError('');
+
+    const { data: { user } } = await client.auth.getUser();
+    if (!user) {
+      setError('Please sign in again to send a message.');
+      setBusy(false);
+      return false;
+    }
+
+    const { data, error: insertError } = await client
+      .from('messages')
+      .insert({
+        conversation_id: conversationId,
+        sender_id: user.id,
+        content,
+        message_type: 'text',
+      })
+      .select('*')
+      .single();
+
+    if (insertError) {
+      setError('Message could not be sent. Please try again.');
+      setBusy(false);
+      return false;
+    }
+
+    if (data) setMessages((items) => items.some((item) => item.id === data.id) ? items : [...items, data as ChatMessage]);
+    setText('');
+    setBusy(false);
+    return true;
+  }
+
+  async function saveMediaMessage(payload: { content: string | null; message_type: 'image' | 'video' | 'voice'; voice_url?: string }) {
+    const client = createClient();
+    if (!client || !userId) return;
+    const { data, error: insertError } = await client.from('messages').insert({ conversation_id: conversationId, sender_id: userId, ...payload }).select('*').single();
+    if (insertError) setError('Media could not be sent. Please try again.');
+    else if (data) setMessages((items) => items.some((item) => item.id === data.id) ? items : [...items, data as ChatMessage]);
+  }
+
+  async function uploadFile(file: File) {
+    const client = createClient();
+    if (!client || !userId) return;
+    setBusy(true); setError('');
+    const type = file.type.startsWith('video/') ? 'video' : 'image';
+    const path = `media/${userId}/${conversationId}/${crypto.randomUUID()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '-')}`;
+    const upload = await client.storage.from('voice-messages').upload(path, file, { contentType: file.type, upsert: false });
+    if (upload.error) setError('Media upload failed. Please try again.');
+    else await saveMediaMessage({ content: publicUrl(path), message_type: type });
+    setBusy(false);
+  }
+
+  async function uploadVoice(blob: Blob) {
+    const client = createClient();
+    if (!client || !userId) return;
+    setBusy(true); setError('');
+    const path = `voice/${userId}/${conversationId}/${crypto.randomUUID()}.webm`;
+    const upload = await client.storage.from('voice-messages').upload(path, blob, { contentType: 'audio/webm', upsert: false });
+    if (upload.error) setError('Voice message upload failed. Please try again.');
+    else await saveMediaMessage({ content: null, message_type: 'voice', voice_url: path });
+    setBusy(false);
+  }
+
+  async function toggleRecording() {
+    if (recording) { recorder.current?.stop(); setRecording(false); return; }
+    try {
+      if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') throw new Error('Voice recording is not supported in this browser.');
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const next = new MediaRecorder(stream); chunks.current = [];
+      next.ondataavailable = (event) => { if (event.data.size) chunks.current.push(event.data); };
+      next.onerror = () => setError('Voice recording failed.');
+      next.onstop = async () => { stream.getTracks().forEach((track) => track.stop()); await uploadVoice(new Blob(chunks.current, { type: 'audio/webm' })); };
+      recorder.current = next; next.start(); setRecording(true); setError('');
+    } catch (reason) { setError(reason instanceof Error ? reason.message : 'Microphone permission was denied.'); setRecording(false); }
+  }
+
+  const name = otherUser?.full_name || otherUser?.username || 'Chat contact';
+  return <section className="overflow-hidden rounded-3xl border border-forest/10 bg-[#efe7db] shadow-card">
+    <header className="flex items-center gap-3 bg-[#075e54] px-4 py-3 text-white"><button type="button" onClick={() => router.push('/messages')} className="grid h-9 w-9 place-items-center rounded-full hover:bg-white/10" aria-label="Back to messages"><ArrowLeft size={19} /></button><div className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-full bg-gold font-black text-forest">{otherUser?.avatar_url ? <img src={otherUser.avatar_url} alt={name} className="h-full w-full object-cover" /> : name.slice(0, 1).toUpperCase()}</div><div className="min-w-0"><h2 className="truncate font-bold">{name}</h2><p className="truncate text-xs text-white/70">{otherUser?.username ? `@${otherUser.username}` : 'Private conversation'}</p></div></header>
+    <div className="flex min-h-[500px] flex-col justify-end p-4 sm:p-6"><div className="max-h-[460px] space-y-2 overflow-y-auto pr-1">{messages.map((item) => { const mine = item.sender_id === userId; return <div key={item.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}><div className={`max-w-[84%] rounded-2xl px-3.5 py-2.5 text-sm shadow-sm ${mine ? 'rounded-br-sm bg-[#128c7e] text-white' : 'rounded-bl-sm bg-white text-slate-800'}`}>{item.message_type === 'voice' && item.voice_url ? <audio controls preload="metadata" className="max-w-full" src={publicUrl(item.voice_url)} /> : item.message_type === 'image' && item.content ? <img src={item.content} alt="Shared image" className="max-h-64 rounded-xl object-cover" /> : item.message_type === 'video' && item.content ? <video controls src={item.content} className="max-h-64 rounded-xl" /> : <p className="whitespace-pre-wrap break-words">{item.content || 'Voice message'}</p>}<div className={`mt-1 flex items-center justify-end gap-1 text-[10px] ${mine ? 'text-white/70' : 'text-slate-500'}`}>{item.created_at ? new Date(item.created_at).toLocaleTimeString('en-PK', { hour: 'numeric', minute: '2-digit' }) : ''}{mine && <CheckCheck size={12} />}</div></div></div>; })}<div ref={end} /></div>
+      {error && <p className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-800">{error}</p>}
+      <form onSubmit={(event) => { event.preventDefault(); void sendMessage(); }} className="mt-4 flex items-center gap-2 border-t border-forest/10 pt-4"><input ref={fileInput} type="file" accept="image/*,video/*" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadFile(file); event.currentTarget.value = ''; }} /><button type="button" onClick={() => fileInput.current?.click()} disabled={busy || recording} className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white text-forest shadow-sm" aria-label="Attach image or video"><Paperclip size={17} /></button><button type="button" onClick={toggleRecording} disabled={busy} className={`grid h-10 w-10 shrink-0 place-items-center rounded-full ${recording ? 'bg-red-100 text-red-700' : 'bg-white text-forest shadow-sm'}`} aria-label={recording ? 'Stop recording' : 'Record voice message'}>{recording ? <Square size={17} /> : <Mic size={18} />}</button><input className="field !rounded-full bg-white" value={text} onChange={(event) => setText(event.target.value)} placeholder={recording ? 'Recording...' : 'Write a message...'} disabled={recording || busy} /><button disabled={busy || !text.trim()} className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#25d366] text-white disabled:opacity-50" aria-label="Send message"><Send size={17} /></button></form>
+    </div></section>;
 }
